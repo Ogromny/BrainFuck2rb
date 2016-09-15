@@ -1,48 +1,41 @@
-puts "https://github.com/Ogromny/BrainFuck2rb"
+puts 'https://github.com/Ogromny/BrainFuck2rb'
 
-puts "\nBrainfuck file: "
-input_file  = gets.to_s.chomp
+print 'Brainfuck file: '
+brainfuck_file = gets.to_s.chomp
 
-output      = String.new
-output_file = input_file + ".rb"
+ruby_code = String.new
 
-output << "buf = Array.new 65535, 0\n"
-output << "i = 0\n"
+ruby_code << 'buf = Array.new 65535, 0' + "\n"
+ruby_code << 'i = 0' + "\n"
 
-begin
-    file = File.open input_file, "r+"
+tabs_count = 0
 
-    tabs = 0
-
+File.open brainfuck_file, 'r' do |f|
     loop do
-        c = file.getc
+        c = f.getc
 
-        break if c == nil || c == "\n"
-
-        str = "\t" * tabs
-
-        output << case c.to_s
-        when '>' then "#{str}i += 1\n"
-        when '<' then "#{str}i -= 1\n"
-        when '+' then "#{str}buf[i] += 1\n"
-        when '-' then "#{str}buf[i] -= 1\n"
-        when '.' then "#{str}putc buf[i]\n"
-        when ',' then "#{str}buf[i] = $stdin.readbyte\n"
-        when '[' then tabs += 1; "#{str}while buf[i] != 0\n"
-        when ']' then tabs -= 1; "#{str}end\n"
+        if c == nil || c == "\n"
+            File.write(brainfuck_file + '.rb', ruby_code)
+            break
         end
-    end
-rescue IOError => e
-    puts "Error: #{e}"
-ensure
-    file.close unless file.nil?
-end
 
-begin
-    ofile = File.new output_file, "w"
-    ofile.write output
-rescue IOError => e
-    puts "Error: #{e}"
-ensure
-    ofile.close unless file.nil?
+        tabs_count -= 1 if c == "]"
+
+        tabs = "\t" * tabs_count
+
+        tabs_count += 1 if c == "["
+
+        ruby_code <<
+            case c.to_s
+                when '>' then "#{tabs}i += 1\n"
+                when '<' then "#{tabs}i -= 1\n"
+                when '+' then "#{tabs}buf[i] += 1\n"
+                when '-' then "#{tabs}buf[i] -= 1\n"
+                when '.' then "#{tabs}putc buf[i]\n"
+                when ',' then "#{tabs}buf[i] = $stdin.readbyte\n"
+                when ']' then "#{tabs}end\n"
+                when '[' then "#{tabs.chomp}while buf[i] != 0\n"
+            end
+    end
+
 end
